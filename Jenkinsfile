@@ -41,4 +41,7 @@ date'''
     }
 
   }
+  environment {
+    name = 'jbn'
+  }
 }
