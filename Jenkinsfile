@@ -1,52 +1,45 @@
 pipeline {
-  agent {
-    node {
-      label 'ubn'
-    }
-
-  }
-  stages {
-    stage('build') {
-      steps {
-        sh '''ls
-pwd
-date'''
-      }
-    }
-
-    stage('test1') {
-      parallel {
-        stage('test1') {
-          steps {
-            echo 'test1 successful'
-          }
+    agent any
+     tools {
+        maven 'Maven' 
         }
-
-        stage('test par') {
-          steps {
-            echo 'test par succ'
-          }
+    stages {
+        stage("Test"){
+            steps{
+                // mvn test
+                sh "mvn test"
+                slackSend channel: 'youtubejenkins', message: 'Job Started'
+                
+            }
+            
         }
-
-      }
+        stage("Build"){
+            steps{
+                sh "mvn package"
+                
+            }
+            
+        }
+        stage("Deploy on Test"){
+            steps{
+                // deploy on container -> plugin
+                deploy adapters: [tomcat9(credentialsId: 'tomcat9details', path: '', url: 'http://192.168.1.108:8080')], contextPath: '/app', war: '**/*.war'
+              
+            }
+            
+        }
     }
-
-    stage('deploy') {
-      steps {
-        sh '''df -h
-'''
-        echo 'deploy sucessful'
-      }
+    post{
+        always{
+            echo "========always========"
+        }
+        success{
+            echo "========pipeline executed successfully ========"
+             slackSend channel: 'youtubejenkins', message: 'Success'
+        }
+        failure{
+            echo "========pipeline execution failed========"
+             slackSend channel: 'youtubejenkins', message: 'Job Failed'
+        }
     }
-
-    stage('Prod') {
-      steps {
-        echo 'End Deployment ready to gp for production'
-      }
-    }
-
-  }
-  environment {
-    name = 'jbn'
-  }
 }
